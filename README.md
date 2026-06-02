@@ -98,3 +98,115 @@ For geometry-based approaches such as SpotFi, the issue is even more severe. Spo
 In addition, propellers operating near the antennas can periodically modulate the received RF signal and introduce artificial Doppler-like effects. Antenna tilting during flight can also create polarization mismatches with the transmitter, causing signal fluctuations that are unrelated to the surrounding environment. Therefore, many of the CSI variations observed on a drone originate from the flight platform itself rather than the environment being sensed.
 
 In summary, existing CSI localization systems assume that the receiver acts as a stable observer of the wireless channel. On a drone, the receiver becomes part of the channel dynamics. The resulting motion-induced phase noise, orientation changes, vibration effects, and continuously evolving multipath geometry violate the core assumptions underlying current CSI fingerprinting and localization methods, making direct deployment on aerial platforms significantly more challenging.
+
+---
+
+## Part 2: Dataset — Widar 3.0 BVP
+
+### What is BVP and Why Does it Matter?
+
+Rather than classifying raw CSI measurements, Widar 3.0 introduces a domain-independent feature called the **Body-coordinate Velocity Profile (BVP)**. The core insight is simple: *a human gesture produces a unique pattern of velocities regardless of where in the room the person stands or which direction they face*. The BVP captures exactly that — a 2-D snapshot of how much signal energy is moving at each combination of X-velocity and Y-velocity at a given instant.
+
+Each `.mat` file stores a **`velocity_spectrum_ro`** tensor of shape **(20 × 20 × T)**:
+
+| Axis | Meaning | Range |
+|---|---|---|
+| Rows (20) | Velocity along X | −2 m/s → +2 m/s, step 0.2 m/s |
+| Cols (20) | Velocity along Y | −2 m/s → +2 m/s, step 0.2 m/s |
+| T (frames) | Time | ~100 ms per frame, median T ≈ 17 |
+
+Because velocity is body-centred, the BVP is largely invariant to receiver placement and room geometry — making it a strong foundation for cross-environment gesture recognition.
+
+---
+
+### BVP Visualization — Push & Pull (Gesture 1)
+
+The three panels below collapse the time axis in different ways to reveal the gesture's velocity fingerprint:
+
+![BVP Projections](./img/bvp_projections.png)
+
+| Panel | What it shows |
+|---|---|
+| **Middle Frame** | A snapshot at the midpoint of the gesture |
+| **Max Projection** | Every velocity cell the body ever activated — the full gesture footprint |
+| **Mean Projection** | Where energy was concentrated most consistently across all frames |
+
+The animation below plays back each time-frame at 10 fps, showing how the velocity blob moves through the grid during the gesture:
+
+![BVP Animation](./img/bvp_animation.gif)
+
+Run the visualizer yourself to explore any gesture:
+
+```bash
+python code/visualize_bvp.py   # change GESTURE_ID (1–10) at the bottom of the script
+```
+
+---
+
+### Dataset Structure
+
+```
+code/data/BVP/
+└── {Date}-VS/           ← 14 recording sessions  (20181109 → 20181211)
+    └── 6-link/          ← 6-receiver link topology
+        └── user{N}/     ← 17 subjects
+            └── *.mat    ← one BVP tensor per gesture instance
+```
+
+| Dimension | Count | Values |
+|---|---|---|
+| Subjects | 17 | user1 – user17 |
+| Gesture classes | 10 | Push&Pull, Sweep, Clap, Slide, Circle ×2, Triangle, Zigzag, N, Random |
+| Locations per room | 8 | grid positions |
+| Orientations | 5 | cardinal + diagonal directions |
+| Repetitions | up to 20 | per condition |
+| **Total .mat files** | **43 658** | |
+
+> **Note:** One file (`user15-5-4-5-2-…-L0.mat`) is a known truncated write on disk and is skipped automatically by the loader.
+
+---
+
+### Filename Convention
+
+Files appear in three formats depending on the recording session. The first five fields are always identical:
+
+```
+user{U} - {gesture} - {location} - {orientation} - {repetition} - …
+```
+
+| Format | Example |
+|---|---|
+| Parameter | `user1-1-1-1-1-1-1e-07-100-20-100000-L0.mat` |
+| Date | `user2-1-1-1-1-20181208.mat` |
+| Parameter + Date | `user1-1-1-1-1-1-1e-07-100-20-100000-L0-20181121.mat` |
+
+The trailing parameters in the longer formats encode the BVP solver configuration:
+
+| Token | Meaning | Value |
+|---|---|---|
+| `p6` | Algorithm flag | `1` |
+| `p7` | Regularisation weight (η) | `1e-07` |
+| `p8` | Max solver iterations | `100` |
+| `p9` | Velocity grid resolution | `20` |
+| `p10` | Scale factor | `100000` |
+| `p11` | Norm type | `L0` |
+
+---
+
+### Class Distribution
+
+Gestures 1–6 span all 14 sessions and are well-represented; Gestures 7–9 appear in fewer sessions; Gesture 10 is the smallest class. Any classifier must account for this imbalance via **class weighting** or **stratified sampling**.
+
+| Gesture | Name | Samples |
+|---|---|---|
+| 1 | Push & Pull | 6 547 |
+| 2 | Sweep | 6 424 |
+| 3 | Clap | 6 421 |
+| 4 | Slide | 6 300 |
+| 5 | Draw Circle (CW) | 6 175 |
+| 6 | Draw Circle (CCW) | 6 041 |
+| 7 | Draw Triangle | 1 750 |
+| 8 | Draw Zigzag | 1 750 |
+| 9 | Draw N | 1 750 |
+| 10 | Random | 500 |
+
