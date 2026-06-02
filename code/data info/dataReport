@@ -1,0 +1,279 @@
+# Widar 3.0 BVP Dataset Analysis Report
+
+> [!NOTE]
+> This report provides a detailed technical analysis of the **Widar 3.0 Body-coordinate Velocity Profile (BVP)** dataset structure, properties, and baseline classification behavior. It outlines filename parameters, global distribution statistics, and actionable modeling recommendations for gesture classification.
+
+---
+
+## 1. Dataset Directory Structure
+The Widar 3.0 BVP dataset is organized in a multi-level directory hierarchy under `code/data/BVP/`. The recursive tree up to depth 4 (relative to BVP root) and the file counts are as follows:
+
+```text
+BVP/ (0 .mat files)
+|-- 20181109-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user1/ (3000 .mat files)
+        |-- user2/ (2999 .mat files)
+        |-- user3/ (1499 .mat files)
+|-- 20181112-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user1/ (2492 .mat files)
+        |-- user2/ (2500 .mat files)
+|-- 20181115-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user1/ (1800 .mat files)
+|-- 20181117-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user4/ (750 .mat files)
+|-- 20181118-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user2/ (749 .mat files)
+        |-- user3/ (750 .mat files)
+|-- 20181121-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user1/ (1500 .mat files)
+        |-- user2/ (3000 .mat files)
+        |-- user3/ (3000 .mat files)
+|-- 20181127-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user2/ (750 .mat files)
+        |-- user5/ (750 .mat files)
+|-- 20181128-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user6/ (750 .mat files)
+|-- 20181130-VS/ (0 .mat files)
+    |-- user10/ (1125 .mat files)
+    |-- user11/ (1125 .mat files)
+    |-- user12/ (1125 .mat files)
+    |-- user13/ (1125 .mat files)
+    |-- user14/ (1125 .mat files)
+    |-- user15/ (1124 .mat files)
+    |-- user16/ (1125 .mat files)
+    |-- user17/ (1125 .mat files)
+    |-- user5/ (1125 .mat files)
+|-- 20181204-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user1/ (1125 .mat files)
+|-- 20181205-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user2/ (625 .mat files)
+        |-- user3/ (750 .mat files)
+|-- 20181208-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user2/ (500 .mat files)
+        |-- user3/ (375 .mat files)
+|-- 20181209-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user2/ (125 .mat files)
+        |-- user6/ (749 .mat files)
+|-- 20181211-VS/ (0 .mat files)
+    |-- 6-link/ (0 .mat files)
+        |-- user3/ (750 .mat files)
+        |-- user7/ (749 .mat files)
+        |-- user8/ (748 .mat files)
+        |-- user9/ (749 .mat files)
+```
+
+*   **Total `.mat` files counted recursively:** 43,658
+*   **Total corrupted/truncated files:** 1 (`user15-5-4-5-2-1-1e-07-100-20-100000-L0.mat` was found to be truncated on disk and is skipped in downstream loaders).
+
+---
+
+## 2. Sample File Analysis
+Five representative files spanning across different dates, users, and gestures were loaded and analyzed:
+
+### Sample 1: `user1-1-1-1-1-1-1e-07-100-20-100000-L0.mat`
+*   **Variable Name:** `velocity_spectrum_ro`
+*   **Type:** `numpy.ndarray`
+*   **Shape:** `(20, 20, 20)`
+*   **Dtype:** `float64`
+*   **Stats:** Min: `0.000000` | Max: `0.141924` | Mean: `0.002497` | Std: `0.011909`
+
+### Sample 2: `user2-3-4-3-4-1-1e-07-100-20-100000-L0.mat`
+*   **Variable Name:** `velocity_spectrum_ro`
+*   **Type:** `numpy.ndarray`
+*   **Shape:** `(20, 20, 17)`
+*   **Dtype:** `float64`
+*   **Stats:** Min: `-0.000000` | Max: `0.137572` | Mean: `0.002594` | Std: `0.012542`
+
+### Sample 3: `user3-2-3-5-18-1-1e-07-100-20-100000-L0.mat`
+*   **Variable Name:** `velocity_spectrum_ro`
+*   **Type:** `numpy.ndarray`
+*   **Shape:** `(20, 20, 16)`
+*   **Dtype:** `float64`
+*   **Stats:** Min: `0.000000` | Max: `0.140219` | Mean: `0.002522` | Std: `0.012836`
+
+### Sample 4: `user15-7-4-1-5-1-1e-07-100-20-100000-L0.mat`
+*   **Variable Name:** `velocity_spectrum_ro`
+*   **Type:** `numpy.ndarray`
+*   **Shape:** `(20, 20, 20)`
+*   **Dtype:** `float64`
+*   **Stats:** Min: `-0.000000` | Max: `0.137632` | Mean: `0.002539` | Std: `0.013193`
+
+### Sample 5: `user9-6-5-5-5-1-1e-07-100-20-100000-L0.mat`
+*   **Variable Name:** `velocity_spectrum_ro`
+*   **Type:** `numpy.ndarray`
+*   **Shape:** `(20, 20, 17)`
+*   **Dtype:** `float64`
+*   **Stats:** Min: `0.000000` | Max: `0.136730` | Mean: `0.002509` | Std: `0.010357`
+
+> [!IMPORTANT]
+> The single variable stored in all valid files containing the actual BVP tensor is **`velocity_spectrum_ro`**.
+
+---
+
+## 3. Filename Parameter Parsing
+The dataset contains files named using three distinct suffix conventions, reflecting different experimental and processing pipelines. All formats share the first five identifiers but differ in their suffix structure:
+
+### Suffix Conventions:
+1.  **Format A (Date Format - 6 tokens):** `user{ID}-{gesture}-{location}-{orientation}-{repetition}-{date}.mat`
+    *   *Example:* `user2-1-1-1-1-20181208.mat`
+2.  **Format B (Parameter Format - 11 tokens):** `user{ID}-{gesture}-{location}-{orientation}-{repetition}-{p6}-{p7}-{p8}-{p9}-{p10}-{p11}.mat`
+    *   *Example:* `user1-1-1-1-1-1-1e-07-100-20-100000-L0.mat`
+3.  **Format C (Combined Format - 12 tokens):** `user{ID}-{gesture}-{location}-{orientation}-{repetition}-{p6}-{p7}-{p8}-{p9}-{p10}-{p11}-{date}.mat`
+    *   *Example:* `user1-1-1-1-1-1-1e-07-100-20-100000-L0-20181121.mat`
+
+### Field Meanings:
+*   **User ID:** Identifier of the subject performing the gesture.
+*   **Gesture:** Target gesture class index (values 1 to 10).
+*   **Location:** Position index where the subject stood in the room (values 1 to 8).
+*   **Orientation:** Direction the subject faced (values 1 to 5).
+*   **Repetition:** Instance index of the repeated gesture (values 1 to 20).
+*   **p6 (Algorithm flag):** Set to `1`.
+*   **p7 (Regularization parameter $\eta$):** Regularization strength used in sparse BVP recovery (typically `1e-07`).
+*   **p8 (Iteration count):** Maximum iterations for BVP optimization (typically `100`).
+*   **p9 (Velocity bins resolution):** Size of the velocity grids (typically `20` representing 20x20 grids).
+*   **p10 (Scaling coefficient):** Constant multiplier used during optimization (typically `100000`).
+*   **p11 (Regularization Norm type):** `L0` (representing sparse approximation/optimization constraints).
+*   **Date:** Recording timestamp in `YYYYMMDD` format.
+
+### Representative Table of Parsed Filenames:
+
+| Filename | User | Gesture | Location | Orientation | Repetition | Remaining Parameters |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `user1-1-1-1-1-1-1e-07-100-20-100000-L0-20181121.mat` | 1 | 1 | 1 | 1 | 1 | p6=1, p7=1e-07, p8=100, p9=20, p10=100000, p11=L0-20181121 |
+| `user1-1-1-1-10-1-1e-07-100-20-100000-L0-20181121.mat` | 1 | 1 | 1 | 1 | 10 | p6=1, p7=1e-07, p8=100, p9=20, p10=100000, p11=L0-20181121 |
+| `user1-1-1-1-2-1-1e-07-100-20-100000-L0-20181121.mat` | 1 | 1 | 1 | 1 | 2 | p6=1, p7=1e-07, p8=100, p9=20, p10=100000, p11=L0-20181121 |
+| `user1-1-1-1-1-1-1e-07-100-20-100000-L0.mat` | 1 | 1 | 1 | 1 | 1 | p6=1, p7=1e-07, p8=100, p9=20, p10=100000, p11=L0 |
+| `user1-1-1-1-10-1-1e-07-100-20-100000-L0.mat` | 1 | 1 | 1 | 1 | 10 | p6=1, p7=1e-07, p8=100, p9=20, p10=100000, p11=L0 |
+| `user2-1-1-1-1-20181208.mat` | 2 | 1 | 1 | 1 | 1 | date=20181208 |
+| `user2-1-1-1-2-20181208.mat` | 2 | 1 | 1 | 1 | 2 | date=20181208 |
+
+---
+
+## 4. Dataset Statistics
+Aggregated metadata from all 43,658 files yields the following global distributions:
+
+*   **Unique Users:** 17 (IDs: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]`)
+*   **Unique Gestures:** 10 (IDs: `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`)
+*   **Unique Locations:** 8 (IDs: `[1, 2, 3, 4, 5, 6, 7, 8]`)
+*   **Unique Orientations:** 5 (IDs: `[1, 2, 3, 4, 5]`)
+*   **Unique Repetitions:** 20 (Max repetition index: `20`)
+
+### Samples per Class (Gesture):
+The dataset shows a clear class imbalance. Gestures 1-6 have significantly more samples than Gestures 7-9, while Gesture 10 has the smallest sample size:
+*   **Gesture 1:** 6,547 samples
+*   **Gesture 2:** 6,424 samples
+*   **Gesture 3:** 6,421 samples
+*   **Gesture 4:** 6,300 samples
+*   **Gesture 5:** 6,175 samples
+*   **Gesture 6:** 6,041 samples
+*   **Gesture 7:** 1,750 samples
+*   **Gesture 8:** 1,750 samples
+*   **Gesture 9:** 1,750 samples
+*   **Gesture 10:** 500 samples
+
+---
+
+## 5. BVP Tensor Characteristics & Shape Validation
+Every valid `.mat` file's BVP tensor was evaluated to confirm standard velocity grid dimensions:
+
+*   **Standard Shape:** `(20, 20, T)`
+    *   `20`: Velocity components along the X-axis (corresponding to range $[-2, 2]\text{ m/s}$ in steps of $0.2\text{ m/s}$).
+    *   `20`: Velocity components along the Y-axis (corresponding to range $[-2, 2]\text{ m/s}$ in steps of $0.2\text{ m/s}$).
+    *   `T`: Time dimension (number of frames) indicating gesture duration.
+*   **Shape Consistency:** **100% of non-corrupted files** follow either the standard 3D shape `(20, 20, T)` or the 2D shape `(20, 20)` (which corresponds to `T=1`).
+    *   *Number of files with 2D shape (T=1):* 1 (`user15-5-4-5-2-1-1e-07-100-20-100000-L0.mat` - wait, the other file was corrupted, this one successfully loaded as a 2D grid).
+*   **Temporal Length ($T$) Statistics:**
+    *   **Minimum T:** `0` (a few files contain zero frames, which need to be filtered during preprocessing).
+    *   **Maximum T:** `38` frames.
+    *   **Mean T:** `16.83` frames.
+    *   **Median T:** `17.00` frames.
+
+---
+
+## 6. Visualization & Animation Pipeline
+Below is the visualization of a single gesture sample (`user1-1-1-1-1`) showing the middle-frame heatmap, max projection over time, and mean projection over time:
+
+![BVP Projections](bvp_visualizations.png)
+
+### BVP Temporal Evolution:
+The following animation shows the frame-by-frame velocity profile changes during the gesture execution:
+
+![BVP Animation](bvp_evolution.gif)
+
+---
+
+## 7. Baseline Classification (Random Forest)
+A baseline Random Forest classifier was trained using a stratified subset of **3,000 samples** (300 samples per gesture, 80/20 train/test split). 
+
+### Feature Extraction Strategy:
+Since $T$ varies across samples, raw tensors cannot be directly flattened into a fixed-length vector. To construct a sequence-length-independent feature vector, we computed three temporal statistics over the time axis:
+1.  **Mean Frame:** Average velocity profile over the gesture duration (`400` features).
+2.  **Max Frame:** Peak velocity profile over the gesture duration (`400` features).
+3.  **Standard Deviation Frame:** Temporal variance of the velocity profile (`400` features).
+*   *Total Feature Dimension:* `1,200` features.
+
+### Classifier Performance:
+*   **Overall Accuracy:** **`19.33%`** (10-class classification, random guess is `10%`).
+
+#### Classification Report:
+```text
+              precision    recall  f1-score   support
+
+           1       0.22      0.28      0.25        60
+           2       0.16      0.17      0.16        60
+           3       0.36      0.33      0.34        60
+           4       0.12      0.10      0.11        60
+           5       0.18      0.15      0.16        60
+           6       0.17      0.17      0.17        60
+           7       0.13      0.13      0.13        60
+           8       0.09      0.10      0.09        60
+           9       0.20      0.18      0.19        60
+          10       0.33      0.32      0.32        60
+
+    accuracy                           0.19       600
+   macro avg       0.19      0.19      0.19       600
+weighted avg       0.19      0.19      0.19       600
+```
+
+#### Confusion Matrix:
+![Confusion Matrix](baseline_confusion_matrix.png)
+
+#### Spatial Feature Importance:
+We reshaped the feature importances of the Random Forest back to the 20x20 grid to visualize which physical velocity cells contribute most to gesture identification:
+
+![Feature Importance Map](feature_importance.png)
+
+---
+
+## 8. Actionable Recommendations & Modeling Strategies
+
+> [!TIP]
+> Based on the dataset statistics, shape validation, and baseline modeling, we recommend the following target selections, preprocessing pipelines, and model architectures.
+
+### 1. Target Selection Guidelines
+*   **Gesture Recognition (Primary):** Classifying the 10 gesture classes. Given the class imbalance (Gestures 1-6 have $\sim 6,000$ samples, Gestures 7-9 have $\sim 1,750$, and Gesture 10 has $\sim 500$), you should employ **class weighting** or **oversampling/undersampling** to ensure the model doesn't overfit to the dominant classes.
+*   **User Identification (Secondary):** Classifying the 17 users. This is useful for user-profile adaptation or biometric validation.
+*   **Environment Generalization (Robustness testing):** Train on a subset of locations/orientations and test on unseen locations/orientations. This measures how well the model generalizes, which is a major concern when deploying CSI systems on moving platforms like drones.
+
+### 2. Feature Extraction & Preprocessing
+*   **Temporal Padding/Interpolation:** Instead of collapsing time (which destroys crucial motion trajectory information), pad all sequences to $T_{max} = 38$ frames, or use linear interpolation to stretch/shrink all sequences to a fixed length (e.g. $T = 20$). This enables the use of 3D convolutional or sequence-modeling architectures.
+*   **Zero-Frame Filtering:** Filter out the rare files that contain $T=0$ frames before loading them into the training pipeline.
+*   **Normalization:** Since signal amplitudes vary based on user position and distance to transmitters, apply **sample-wise normalization** (e.g., scale BVP tensors to $[0, 1]$ or standardize them to mean=0, std=1) to ensure amplitude invariance.
+
+### 3. Model Architecture Recommendations
+The low baseline Random Forest accuracy ($\sim 19.33\%$) demonstrates that temporal summaries are insufficient. Gestures are dynamic, sequential patterns, and we recommend:
+1.  **3D Convolutional Neural Networks (3D-CNNs):** Treat BVP sequences as 3D volumes (Height=20, Width=20, Depth=T) to extract joint spatio-temporal features.
+2.  **ConvLSTM / ConvGRU:** Use 2D convolutions to extract spatial BVP features at each time-step, followed by recurrent layers (LSTM/GRU) to model the temporal sequence.
+3.  **Spatio-Temporal Transformers:** Apply self-attention over the flattened spatial velocity grids across time.
