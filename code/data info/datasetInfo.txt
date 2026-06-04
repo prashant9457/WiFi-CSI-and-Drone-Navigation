@@ -1,0 +1,261 @@
+README_baidudisk.md 3/27/2021
+1 / 9This repository contains the datasets of Channel S tate Information (CSI), Body-coordinate V elocity Profile
+(BVP) and Doppler Frequency Spectrum (DFS) for human gesture recognition using WiFi.
+Cite the P aper
+Yue Zheng, Yi Zhang, Kun Qian, Guidong Zhang, Yunhao Liu, Chenshu Wu, and Zheng Y ang. 2019.
+"Zero-Effor t Cross-Domain Gestur e Recognition With Wi-Fi" . In Proceedings of MobiSys ’19 .
+Association for Computing Machinery, New Y ork, NY, USA, 313–325.
+Readers can also check the homepage of project Widar3.0  for more details about WiFi sensing.
+Dataset Description
+Data
+TypeFile
+Name
+FormatDescr iption
+CSIid-a-b-c-
+d-Rx.dat'id': user's id; ' a': gesture type, ' b': torso location, ' c': face orientation, ' d': repetition
+number, ' Rx': Wi-Fi receiver id.
+BVPid-a-b-c-
+d-
+suffix.mat'id': user's id; ' a': gesture type, ' b': torso location, ' c': face orientation, ' d': repetition
+number. Each file is a 20*20*T  matrix, where the first dimension represents the
+velocity along x axis ranging between [-2,+2] m/s, the second dimension represents
+the velocity along y axis ranging between [-2,+2] m/s and the third dimension
+represents the timestamps with 10Hz sampling rate.
+DFSid-a-b-c-
+d-
+suffix.mat'id': user's id; ' a': gesture type, ' b': torso location, ' c': face orientation, ' d': repetition
+number. Each file is a 6*121*T  matrix, where the first dimension represents the 6
+receivers, the second dimension represents the 121 frequency bins ranging between
+[-60, 60] Hz and the third dimension represents the timestamps with 1000Hz
+sampling rate.
+Note: gesture type refers to Gesture Description  part. Rx location, torso location and face orientation refer to
+Device Deployment  part. Due to space limit, DFS data can be accessed from our FTP.
+Data
+TypeFiles Room# Gestur es User s
+CSI CSI/20181109.zip 11: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-Zigzag(V ertical); 6:
+Draw-N(V ertical);User1,2,3
+CSI CSI/20181112.zip 11: Draw-1; 2: Draw-2; 3: Draw-3; 4:
+Draw-4; 5: Draw-5; 6: Draw-6; 7:
+Draw-7; 8: Draw-8; 9: Draw-9; 0:
+Draw-0;User1,2
+CSI CSI/20181115.zip 11: Push&Pull; 2: S weep; 3: Clap; 4:
+Draw-O(V ertical); 5: Draw-
+Zigzag(V ertical); 6: Draw-N(V ertical);User1README_baidudisk.md 3/27/2021
+2 / 9Data
+TypeFiles Room# Gestur es User s
+CSI CSI/20181116.zip 11: Draw-1; 2: Draw-2; 3: Draw-3; 4:
+Draw-4; 5: Draw-5; 6: Draw-6; 7:
+Draw-7; 8: Draw-8; 9: Draw-9; 0:
+Draw-0;User1
+CSI CSI/20181117.zip 21: Push&Pull; 2: S weep; 3: Clap; 4:
+Draw-O(V ertical); 5: Draw-
+Zigzag(V ertical); 6: Draw-N(V ertical);User4
+CSI CSI/20181118.zip 21: Push&Pull; 2: S weep; 3: Clap; 4:
+Draw-O(V ertical); 5: Draw-
+Zigzag(V ertical); 6: Draw-N(V ertical);User2,3
+CSI CSI/20181121.zip 11: Slide; 2: Draw-O(Horizontal); 3:
+Draw-Zigzag(Horizontal); 4: Draw-
+N(Horizontal); 5: Draw-
+Triangle(Horizontal); 6: Draw-
+Rectangle(Horizontal);User1,2,3
+CSI CSI/20181127.zip 21: Slide; 2: Draw-O(Horizontal); 3:
+Draw-Zigzag(Horizontal); 4: Draw-
+N(Horizontal); 5: Draw-
+Triangle(Horizontal); 6: Draw-
+Rectangle(Horizontal);User2,5
+CSI CSI/20181128.zip 21: Push&Pull; 2: S weep; 3: Clap; 4:
+Draw-O(Horizontal); 5: Draw-
+Zigzag(Horizontal); 6: Draw-
+N(Horizontal);User6
+CSI CSI/20181130_user5_10_11.zip 11: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-O(Horizontal); 6:
+Draw-Zigzag(Horizontal); 7: Draw-
+N(Horizontal); 8: Draw-
+Triangle(Horizontal); 9: Draw-
+Rectangle(Horizontal);User5,10,11
+CSI CSI/20181130_user12_13_14.zip 11: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-O(Horizontal); 6:
+Draw-Zigzag(Horizontal); 7: Draw-
+N(Horizontal); 8: Draw-
+Triangle(Horizontal); 9: Draw-
+Rectangle(Horizontal);User12,13,14README_baidudisk.md 3/27/2021
+3 / 9Data
+TypeFiles Room# Gestur es User s
+CSI CSI/20181130_user15_16_17.zip 11: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-O(Horizontal); 6:
+Draw-Zigzag(Horizontal); 7: Draw-
+N(Horizontal); 8: Draw-
+Triangle(Horizontal); 9: Draw-
+Rectangle(Horizontal);User15,16,17
+CSI CSI/20181204.zip 21: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-O(Horizontal); 6:
+Draw-Zigzag(Horizontal); 7: Draw-
+N(Horizontal); 8: Draw-
+Triangle(Horizontal); 9: Draw-
+Rectangle(Horizontal);User1
+CSI CSI/20181205.zip 2[User2 ]1: Draw-O(Horizontal); 2:
+Draw-Zigzag(Horizontal); 3: Draw-
+N(Horizontal); 4: Draw-
+Triangle(Horizontal); 5: Draw-
+Rectangle(Horizontal);
+[User3 ]1: Slide; 2: Draw-
+O(Horizontal); 3: Draw-
+Zigzag(Horizontal); 4: Draw-
+N(Horizontal); 5: Draw-
+Triangle(Horizontal); 6: Draw-
+Rectangle(Horizontal);User2,3
+CSI CSI/20181208.zip 2[User2 ]:1: Push&Pull; 2: S weep; 3:
+Clap; 4: Slide;
+[User3 ]:1: Push&Pull;2: S weep; 3:
+Clap;User2,3
+CSI CSI/20181209.zip 2[User2 ]:1: Push&Pull;
+[User6 ]:1: Push&Pull; 2: S weep; 3:
+Clap; 4: Slide; 5: Draw-O(Horizontal);
+6: Draw-Zigzag(Horizontal);User2,6
+CSI CSI/20181211.zip 31: Push&Pull; 2: S weep; 3: Clap; 4:
+Slide; 5: Draw-O(Horizontal); 6:
+Draw-Zigzag(Horizontal);User3,7,8,9
+BVP BVP.zip AllThe gestures correspond to those in
+CSI data.All
+DFS DFS.zip AllThe gestures correspond to those in
+CSI data.AllREADME_baidudisk.md 3/27/2021
+4 / 9Note: The prefix of zip file represents the data collection date. Due to space limit, DFS data can be accessed
+from our FTP.
+Gesture Description
+Note: (H) represents Horizontal and (V) represents V ertical.
+Floor Plan
+Room#1 - Classr oomREADME_baidudisk.md 3/27/2021
+5 / 9
+Room#2 - Hall
+Room#3 - Office
+Device DeploymentREADME_baidudisk.md 3/27/2021
+6 / 9
+Torso Location# Location (m) Face Or ientation# Orientation (degr ee)
+1 (1.365, 0.455) 1 -90
+2 (0.455, 0.455) 2 -45
+3 (0.455, 1.365) 3 0
+4 (1.365, 1.365) 4 45
+5 (0.91, 0.91) 5 90
+6 (2.275, 1.365)
+7 (2.275 2.275)
+8 (1.365 2.275)
+Note: T orso Location #6-8 are not shown in the figure. The reference orientation is denoted as facing the T x
+(Orient#3). T x location is (0, 0).
+Code Example
+The following shows demo code for BVP extraction and DFS extraction from raw CSI data. Detailed BVP
+extraction algorithm can be found in our paper .
+1. Extract BVP fr om CSI
+clear; 
+clc; 
+close all;  
+ 
+start_index = [ 1 1 1 1]; 
+total_mo = 1;   % Total motion count  
+total_pos = 1;  % Total position count  README_baidudisk.md 3/27/2021
+7 / 9total_ori = 1;  % Total orientation count  
+total_ges = 1;  % Total gesture repeatation count  
+start_index_met = 0; 
+rx_cnt = 6;     % Receiver count(no less than 3)  
+rx_acnt = 3;    % Antenna count for each receiver  
+dpth_pwd = './'; 
+dpth_date = 'Data'; 
+dpth_people = 'userA'; 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+dpth_ges = [dpth_pwd, dpth_date, '/']; 
+dpth_vs = [dpth_pwd, 'BVP/']; 
+for mo_sel = 1:total_mo  
+    for pos_sel = 1:total_pos  
+        for ori_sel = 1:total_ori  
+            for ges_sel = 1:total_ges  
+                spfx_ges = [dpth_people, '-', num2str(mo_sel), '-', 
+num2str(pos_sel),...  
+                    '-', num2str(ori_sel), '-', num2str(ges_sel)];  
+                if mo_sel == start_index( 1) && pos_sel == start_index( 2) &&... 
+                        ori_sel == start_index( 3) && ges_sel == start_index( 4) 
+                    start_index_met = 1; 
+                end 
+                if start_index_met == 1 
+                    disp(['Running ' , spfx_ges])  
+                    try 
+                        DVM_main;  
+                    catch err 
+                        disp(['Exception Occured'  err.message]);  
+                        fprintf(exception_fid, '%s\n', spfx_ges);  
+                        fprintf(exception_fid, '%s\n', err.message);  
+                     continue ; 
+                    end 
+                else 
+                    disp(['Skipping ' , spfx_ges])  
+                end 
+            end 
+        end 
+    end
+end
+The mo_sel  pos_sel  ori_sel  ges_sel  will traverse all of the CSI file and call DVM_main  to extract BVP, which
+is the core algorithm of our paper.
+The extracted BVP data will be stored in /BVP directory. Make sure you load all of the code component
+provided in BVPExtractionCode.zip  in Matlab working space.
+2. Extract DF S from CSI
+clear; 
+clc; 
+close all;  README_baidudisk.md 3/27/2021
+8 / 9 
+start_index = [ 1 1 1 1]; 
+total_mo = 1;   % Total motion count  
+total_pos = 1;  % Total position count  
+total_ori = 1;  % Total orientation count  
+total_ges = 1;  % Total gesture repeatation count  
+start_index_met = 0; 
+rx_cnt = 6;     % Receiver count(no less than 3)  
+rx_acnt = 3;    % Antenna count for each receiver  
+dpth_pwd = './'; 
+dpth_date = 'Data'; 
+dpth_people = 'userA'; 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+dpth_ges = [dpth_pwd, dpth_date, '/']; 
+dpth_vs = [dpth_pwd, 'BVP/']; 
+ 
+for mo_sel = 1:total_mo  
+    for pos_sel = 1:total_pos  
+        for ori_sel = 1:total_ori  
+            for ges_sel = 1:total_ges  
+                spfx_ges = [dpth_people, '-', num2str(mo_sel), '-', 
+num2str(pos_sel),...  
+                    '-', num2str(ori_sel), '-', num2str(ges_sel)];  
+                if mo_sel == start_index( 1) && pos_sel == start_index( 2) &&... 
+                        ori_sel == start_index( 3) && ges_sel == start_index( 4) 
+                    start_index_met = 1; 
+                end 
+                if start_index_met == 1 
+                    disp(['Running ' , spfx_ges])  
+                    try 
+                        [doppler_spectrum, freq_bin] = get_doppler_spectrum(...  
+                            spfx_ges, rx_cnt, rx_acnt, 'stft'); 
+                    catch err 
+                        disp(['Exception Occured'  err.message]);  
+                     continue ; 
+                    end 
+                else 
+                    disp(['Skipping ' , spfx_ges])  
+                end 
+            end 
+        end 
+    end
+end
+The mo_sel  pos_sel  ori_sel  ges_sel  will traverse all of the CSI file and call get_doppler_spectrum  to
+extract DFS. Both CWT  and STFT algorithms are supported. CSI denoising algorithms can be found in our
+previous works widar2.0  and widance .
+The extracted DFS profile is stored in variable doppler_spectrum  in Matlab working space. Y ou can use it for
+your custom applications and algorithms. Make sure you load all of the code component provided in
+DFSExtractionCode.zip  in Matlab working space.README_baidudisk.md 3/27/2021
+9 / 9Bug Notice
+List of empty files
+20181109/user2/user2-6-4-4-2-r1.dat
+20181109/user3/user3-1-3-1-8-r5.dat
+20181118/user2/user2-3-5-3-4-r4.dat
+20181209/user6/user6-3-1-1-5-r5.dat
+20181211/user8/user8-1-1-1-1-r5.dat
+20181211/user8/user8-3-3-3-5-r2.dat
+20181211/user9/user9-1-1-1-1-r1.dat
+Please skip these files when loading them into your applications.

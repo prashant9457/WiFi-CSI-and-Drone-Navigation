@@ -47,8 +47,8 @@ import numpy as np
 import scipy.io as sio
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -57,6 +57,10 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+
+# Custom modules
+from bvp_loader import load_dataset as load_bvp_dataset
+from bvp_plotting import _dark_ax, plot_confusion_matrix
 
 warnings.filterwarnings("ignore")
 
@@ -88,73 +92,21 @@ VAL_SIZE    = 0.15   # of remaining after test split
 # 1. Data loading & feature extraction
 # ---------------------------------------------------------------------------
 
-def extract_features(bvp: np.ndarray) -> np.ndarray:
-    """
-    Collapse the (20, 20, T) tensor into a flat feature vector.
-
-    Three projections are computed along the time axis:
-      · max-projection  — the gesture's full velocity footprint
-      · mean-projection — consistent energy distribution
-      · std-projection  — temporal variability / motion dynamics
-
-    Result: (3 × 20 × 20,) = 1 200-dimensional vector.
-    """
-    max_p  = np.max(bvp,  axis=2)   # (20, 20)
-    mean_p = np.mean(bvp, axis=2)   # (20, 20)
-    std_p  = np.std(bvp,  axis=2)   # (20, 20)
-    return np.concatenate([max_p.ravel(), mean_p.ravel(), std_p.ravel()])
-
-
 def load_dataset(root: str) -> tuple[np.ndarray, np.ndarray]:
     """
     Walk the BVP directory tree and load all samples for the top-5 gestures.
+    Uses caching to speed up future runs.
 
     Returns
     -------
     X : np.ndarray  shape (N, 1200)   feature vectors
     y : np.ndarray  shape (N,)        class indices 0..4
     """
-    gesture_ids = set(TOP5.keys())
-    X_list: list[np.ndarray] = []
-    y_list: list[int]        = []
-    skipped = 0
-
-    print("Scanning BVP dataset tree...")
-    for dirpath, _, files in os.walk(root):
-        for fname in sorted(files):
-            if not fname.endswith(".mat"):
-                continue
-            parts = fname.split("-")
-            try:
-                g = int(parts[1])
-            except (IndexError, ValueError):
-                continue
-            if g not in gesture_ids:
-                continue
-
-            path = os.path.join(dirpath, fname)
-            try:
-                mat  = sio.loadmat(path)
-                data = mat["velocity_spectrum_ro"].astype(np.float32)
-                if data.ndim == 2:
-                    data = data[:, :, np.newaxis]   # restore squeezed time axis
-                if data.shape[2] == 0:
-                    skipped += 1
-                    continue
-            except Exception:
-                skipped += 1
-                continue
-
-            X_list.append(extract_features(data))
-            y_list.append(LABEL_MAP[g])
-
-    if skipped:
-        print(f"  [!] Skipped {skipped} corrupt / empty files")
-
-    X = np.vstack(X_list)
-    y = np.array(y_list, dtype=np.int64)
-    print(f"  [ok] {len(y)} samples loaded  |  feature dim = {X.shape[1]}")
-
+    X, y, _, _ = load_bvp_dataset(
+        root,
+        gesture_ids=set(TOP5.keys()),
+        cache_filename="classify_bvp_cache.npz",
+    )
     # Print per-class counts
     for idx, name in enumerate(CLASS_NAMES):
         print(f"     [{idx}] {name:<22} {(y == idx).sum():>5} samples")
@@ -165,45 +117,6 @@ def load_dataset(root: str) -> tuple[np.ndarray, np.ndarray]:
 # ---------------------------------------------------------------------------
 # 2. Visualization helpers
 # ---------------------------------------------------------------------------
-
-def _dark_ax(ax):
-    ax.set_facecolor("#1e1e2e")
-    ax.tick_params(colors="#94a3b8", labelsize=9)
-    for spine in ax.spines.values():
-        spine.set_edgecolor("#334155")
-
-
-def plot_confusion_matrix(cm: np.ndarray, class_names: list, out_path: str) -> None:
-    """Render a dark-themed confusion matrix heatmap."""
-    fig, ax = plt.subplots(figsize=(8, 7), facecolor="#12121f")
-    _dark_ax(ax)
-
-    im = ax.imshow(cm, cmap="magma", aspect="equal")
-    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.ax.tick_params(colors="#94a3b8", labelsize=8)
-    cbar.outline.set_edgecolor("#334155")
-
-    n = len(class_names)
-    ax.set_xticks(range(n))
-    ax.set_yticks(range(n))
-    ax.set_xticklabels(class_names, rotation=28, ha="right", color="#94a3b8", fontsize=9)
-    ax.set_yticklabels(class_names, color="#94a3b8", fontsize=9)
-    ax.set_xlabel("Predicted Label", color="#94a3b8", fontsize=11, labelpad=8)
-    ax.set_ylabel("True Label",      color="#94a3b8", fontsize=11, labelpad=8)
-    ax.set_title("Confusion Matrix — Test Set", color="#c4b5fd", fontsize=13, pad=14)
-
-    thresh = cm.max() / 2.0
-    for i in range(n):
-        for j in range(n):
-            ax.text(j, i, f"{cm[i, j]}",
-                    ha="center", va="center", fontsize=11, fontweight="bold",
-                    color="white" if cm[i, j] < thresh else "#12121f")
-
-    plt.tight_layout()
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    plt.savefig(out_path, dpi=150, bbox_inches="tight", facecolor="#12121f")
-    print(f"  Saved -> {out_path}")
-    plt.close(fig)
 
 
 def plot_feature_importance(
@@ -244,7 +157,7 @@ def plot_feature_importance(
     ax.set_yticklabels(labels, fontsize=8, color="#94a3b8")
     ax.set_xlabel("Importance", color="#94a3b8", fontsize=10)
     ax.set_title(
-        f"Random Forest — Top {top_k} Feature Importances\n"
+        f"MLP Connection Weights — Top {top_k} Feature Importances\n"
         "■ max-projection  ■ mean-projection  ■ std-projection",
         color="#c4b5fd", fontsize=11, pad=10,
     )
@@ -404,8 +317,11 @@ def _try_torch_cnn(
 
     # CNN confusion matrix
     cm_cnn = confusion_matrix(all_l, all_p)
-    plot_confusion_matrix(cm_cnn, CLASS_NAMES,
-                          os.path.join(OUT_DIR, "confusion_matrix_cnn.png"))
+    plot_confusion_matrix(
+        cm_cnn, CLASS_NAMES,
+        "CNN Confusion Matrix -- Test Set",
+        os.path.join(OUT_DIR, "confusion_matrix_cnn.png")
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -432,41 +348,48 @@ if __name__ == "__main__":
     )
     print(f"Split  : train={len(y_train)}  val={len(y_val)}  test={len(y_test)}\n")
 
-    # ── Random Forest ─────────────────────────────────────────────────────
+    # ── MLP Classifier ────────────────────────────────────────────────────
     print("=" * 55)
-    print("  Random Forest Classifier")
+    print("  Multi-Layer Perceptron (MLP) Classifier")
     print("=" * 55)
 
-    rf = Pipeline([
+    mlp = Pipeline([
         ("scaler", StandardScaler()),
-        ("clf",    RandomForestClassifier(
-            n_estimators=200,
-            max_depth=None,
-            n_jobs=-1,
+        ("clf",    MLPClassifier(
+            hidden_layer_sizes=(256, 128),
+            max_iter=100,
+            early_stopping=True,
+            validation_fraction=0.1,
             random_state=SEED,
-            class_weight="balanced",   # handles minor class imbalance
         )),
     ])
 
     t0 = time.time()
-    print("  Training... (this may take ~30-60 s on the full dataset)")
-    rf.fit(X_train, y_train)
+    print("  Training MLP... (using early stopping to prevent overfitting)")
+    mlp.fit(X_train, y_train)
     print(f"  Trained in {time.time() - t0:.1f}s\n")
 
-    val_acc  = accuracy_score(y_val,  rf.predict(X_val))
-    test_acc = accuracy_score(y_test, rf.predict(X_test))
+    val_acc  = accuracy_score(y_val,  mlp.predict(X_val))
+    test_acc = accuracy_score(y_test, mlp.predict(X_test))
     print(f"  Val  accuracy : {val_acc  * 100:.2f}%")
     print(f"  Test accuracy : {test_acc * 100:.2f}%\n")
 
-    y_pred = rf.predict(X_test)
+    y_pred = mlp.predict(X_test)
     print(classification_report(y_test, y_pred, target_names=CLASS_NAMES))
 
     # ── Plots ─────────────────────────────────────────────────────────────
     print("Generating plots...")
     cm = confusion_matrix(y_test, y_pred)
-    plot_confusion_matrix(cm, CLASS_NAMES, os.path.join(OUT_DIR, "confusion_matrix.png"))
+    plot_confusion_matrix(
+        cm, CLASS_NAMES,
+        "Confusion Matrix -- Test Set",
+        os.path.join(OUT_DIR, "confusion_matrix.png")
+    )
 
-    importances = rf.named_steps["clf"].feature_importances_
+    # Compute connection weights heuristic for feature importance:
+    # average weight magnitude of the first layer connections
+    coefs = mlp.named_steps["clf"].coefs_[0]
+    importances = np.mean(np.abs(coefs), axis=1)
     plot_feature_importance(importances, top_k=40,
                             out_path=os.path.join(OUT_DIR, "feature_importance.png"))
 
