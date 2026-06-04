@@ -39,7 +39,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # Custom modules
 from bvp_loader import load_sequence_dataset
-from bvp_plotting import plot_confusion_matrix
+from bvp_plotting import plot_confusion_matrix, _dark_ax
 
 # Configuration
 DATA_DIR = os.path.join("code", "data", "BVP")
@@ -208,6 +208,8 @@ def main():
     best_val_loss = float("inf")
     patience_counter = 0
 
+    tr_losses, val_losses, val_accs = [], [], []
+
     print(f"  {'Epoch':>5}  {'Tr Loss':>8}  {'Val Loss':>8}  {'Val Acc':>7}")
     print("  " + "-" * 38)
 
@@ -248,6 +250,10 @@ def main():
         epoch_val_loss = val_loss / val_total
         epoch_val_acc = val_correct / val_total
 
+        tr_losses.append(epoch_train_loss)
+        val_losses.append(epoch_val_loss)
+        val_accs.append(epoch_val_acc)
+
         print(f"  {epoch:>5d}  {epoch_train_loss:>8.4f}  {epoch_val_loss:>8.4f}  {epoch_val_acc*100:>6.2f}%")
 
         # Early Stopping Check
@@ -262,6 +268,31 @@ def main():
                 break
 
     print(f"Training completed in {time.time() - t0:.1f}s\n")
+
+    # Plot training curves
+    fig, ax = plt.subplots(figsize=(9, 4), facecolor="#12121f")
+    _dark_ax(ax)
+    epochs_range = range(1, len(tr_losses) + 1)
+    ax.plot(epochs_range, tr_losses, color="#818cf8", label="Train Loss")
+    ax.plot(epochs_range, val_losses, color="#34d399", label="Val Loss")
+    ax.set_xlabel("Epoch", color="#94a3b8", fontsize=10)
+    ax.set_ylabel("Cross-Entropy Loss", color="#94a3b8", fontsize=10)
+    
+    ax2 = ax.twinx()
+    ax2.plot(epochs_range, [a * 100 for a in val_accs], color="#f472b6", linestyle="--", label="Val Acc (%)")
+    ax2.set_ylabel("Accuracy (%)", color="#f472b6", fontsize=10)
+    ax2.tick_params(colors="#f472b6")
+    
+    ax.set_title("BVP-LSTM Training Curve", color="#c4b5fd", fontsize=12, pad=10)
+    lines1, lab1 = ax.get_legend_handles_labels()
+    lines2, lab2 = ax2.get_legend_handles_labels()
+    ax.legend(lines1 + lines2, lab1 + lab2, facecolor="#1e1e2e", labelcolor="white")
+    
+    plt.tight_layout()
+    curve_out = os.path.join(OUT_DIR, "lstm_training_curve.png")
+    plt.savefig(curve_out, dpi=150, bbox_inches="tight", facecolor="#12121f")
+    print(f"  Saved -> {curve_out}")
+    plt.close(fig)
 
     # ── Evaluation ────────────────────────────────────────────────────────
     print("Evaluating best model checkpoint on test set...")
