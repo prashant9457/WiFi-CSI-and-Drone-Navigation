@@ -113,3 +113,65 @@ def plot_invariance_summary(
     plt.savefig(out_path, dpi=150, bbox_inches="tight", facecolor="#12121f")
     print(f"  Saved -> {out_path}")
     plt.close(fig)
+
+def plot_feature_importance(
+    importances: np.ndarray, top_k: int, out_path: str
+) -> None:
+    """
+    Bar chart of the top-k most important feature dimensions.
+
+    The 1200 features are laid out as:
+      [  0: 400)  max-projection  cells  (row-major 20×20)
+      [400: 800)  mean-projection cells
+      [800:1200)  std-projection  cells
+    """
+    top_idx = np.argsort(importances)[::-1][:top_k]
+    top_imp = importances[top_idx]
+
+    def _channel_label(i: int) -> str:
+        if i < 400:
+            r, c = divmod(i, 20)
+            return f"max [{r},{c}]"
+        elif i < 800:
+            r, c = divmod(i - 400, 20)
+            return f"mean[{r},{c}]"
+        else:
+            r, c = divmod(i - 800, 20)
+            return f"std [{r},{c}]"
+
+    labels = [_channel_label(i) for i in top_idx]
+    colors = [
+        "#818cf8" if i < 400 else "#f472b6" if i < 800 else "#34d399"
+        for i in top_idx
+    ]
+
+    fig, ax = plt.subplots(figsize=(14, 5), facecolor="#12121f")
+    _dark_ax(ax)
+    ax.barh(range(top_k)[::-1], top_imp, color=colors, alpha=0.85)
+    ax.set_yticks(range(top_k)[::-1])
+    ax.set_yticklabels(labels, fontsize=8, color="#94a3b8")
+    ax.set_xlabel("Importance", color="#94a3b8", fontsize=10)
+    ax.set_title(
+        f"MLP Connection Weights — Top {top_k} Feature Importances\n"
+        "■ max-projection  ■ mean-projection  ■ std-projection",
+        color="#c4b5fd", fontsize=11, pad=10,
+    )
+
+    # Legend patches
+    from matplotlib.patches import Patch
+    legend = ax.legend(
+        handles=[
+            Patch(color="#818cf8", label="max-projection"),
+            Patch(color="#f472b6", label="mean-projection"),
+            Patch(color="#34d399", label="std-projection"),
+        ],
+        facecolor="#1e1e2e", labelcolor="white", fontsize=9,
+    )
+    legend.get_frame().set_edgecolor("#334155")
+
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    plt.savefig(out_path, dpi=150, bbox_inches="tight", facecolor="#12121f")
+    print(f"  Saved -> {out_path}")
+    plt.close(fig)
+
