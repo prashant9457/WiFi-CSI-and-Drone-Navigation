@@ -168,3 +168,86 @@ def load_dataset(
     print(f"       Orientations : {np.unique(y_o) + 1}")
     print()
     return X, y_g, y_l, y_o
+
+def load_sequence_dataset(
+    root: str,
+    gesture_ids: set[int] | None = None,
+    cache_filename: str = "classify_lstm_cache.npz",
+) -> tuple[list[np.ndarray], np.ndarray]:
+    """
+    Load raw BVP sequences, keeping the temporal dimension intact.
+    Flatten each (20, 20) frame to 400 features.
+
+    Returns
+    -------
+    sequences : list of np.ndarray, each of shape (T_i, 400)
+    labels    : np.ndarray of shape (N,)
+    """
+    if gesture_ids is None:
+        gesture_ids = {1, 2, 3, 4, 5}
+
+    cache_path = os.path.join(root, cache_filename)
+    if os.path.exists(cache_path):
+        print(f"Loading sequence dataset from cache: {cache_path}")
+        try:
+            cache = np.load(cache_path, allow_pickle=True)
+            sequences = list(cache["sequences"])
+            labels = cache["labels"]
+            lengths = [len(seq) for seq in sequences]
+            print(f"  [ok] {len(labels)} sequence samples loaded from cache")
+            print(f"       Sequence length stats: min={np.min(lengths)}, max={np.max(lengths)}, mean={np.mean(lengths):.2f}")
+            print()
+            return sequences, labels
+        except Exception as e:
+            print(f"Failed to load cache: {e}. Re-scanning raw files...")
+
+    gesture_label_map = {gid: idx for idx, gid in enumerate(sorted(gesture_ids))}
+    sequences, labels = [], []
+    skipped = 0
+
+    print("Scanning BVP dataset tree for sequences...")
+    for dirpath, _, files in os.walk(root):
+        for fname in sorted(files):
+            if not fname.endswith(".mat"):
+                continue
+            parts = fname.split("-")
+            try:
+                g = int(parts[1])
+            except (IndexError, ValueError):
+                continue
+            if g not in gesture_ids:
+                continue
+
+            path = os.path.join(dirpath, fname)
+            try:
+                data = load_single_bvp(path)
+            except Exception:
+                skipped += 1
+                continue
+
+            T = data.shape[2]
+            # Transpose (20, 20, T) -> (T, 20, 20) then flatten space -> (T, 400)
+            data_t = np.transpose(data, (2, 0, 1))
+            seq = data_t.reshape(T, 400)
+
+            sequences.append(seq)
+            labels.append(gesture_label_map[g])
+
+    if skipped:
+        print(f"  [!] Skipped {skipped} corrupt / empty files")
+
+    labels = np.array(labels, dtype=np.int64)
+
+    try:
+        np.savez_compressed(cache_path, sequences=np.array(sequences, dtype=object), labels=labels)
+        print(f"Saved sequence dataset cache to {cache_path}")
+    except Exception as e:
+        print(f"Failed to save cache: {e}")
+
+    lengths = [len(seq) for seq in sequences]
+    print(f"  [ok] {len(labels)} sequence samples loaded")
+    print(f"       Sequence length stats: min={np.min(lengths)}, max={np.max(lengths)}, mean={np.mean(lengths):.2f}")
+    print()
+
+    return sequences, labels
+
