@@ -41,118 +41,28 @@ from torch.utils.data import Dataset, DataLoader
 from bvp_loader import load_sequence_dataset
 from bvp_plotting import plot_confusion_matrix, _dark_ax
 
+# Common package imports
+from common.constants import (
+    DATA_DIR,
+    OUT_DIR,
+    SEED,
+    TOP5,
+    TOP5_CLASS_NAMES as CLASS_NAMES,
+)
+from common.models import (
+    BVPSequenceDataset,
+    collate_fn,
+    BVPLSTMClassifier,
+)
+from common.training import train_lstm
+
 # Configuration
-DATA_DIR = os.path.join("code", "data", "BVP")
-OUT_DIR = "img"
 MODEL_PATH = "lstm_best.pth"
-SEED = 42
 BATCH_SIZE = 64
 EPOCHS = 50
 LEARNING_RATE = 1e-3
 PATIENCE = 5  # Early stopping patience
-
-TOP5 = {
-    1: "Push & Pull",
-    2: "Sweep",
-    3: "Clap",
-    4: "Slide",
-    5: "Draw Circle (CW)",
-}
-CLASS_NAMES = [TOP5[gid] for gid in sorted(TOP5)]
 MLP_ACCURACY = 45.75  # Stored baseline MLP result for comparison
-
-# ---------------------------------------------------------------------------
-# 1. Custom Dataset & Collate Function (Handling Variable Length Sequences)
-# ---------------------------------------------------------------------------
-
-class BVPSequenceDataset(Dataset):
-    """
-    Custom PyTorch Dataset that loads variable-length BVP sequences.
-    Each sample is a float32 tensor of shape (T, 400).
-    """
-    def __init__(self, sequences: list[np.ndarray], labels: np.ndarray):
-        # Convert list of NumPy arrays to PyTorch tensors
-        self.sequences = [torch.tensor(seq, dtype=torch.float32) for seq in sequences]
-        self.labels = torch.tensor(labels, dtype=torch.long)
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        return self.sequences[idx], self.labels[idx]
-
-def collate_fn(batch):
-    """
-    Custom collate function for DataLoader.
-    
-    Why Padding is Required:
-    ------------------------
-    PyTorch DataLoader batches tensors together into a single multi-dimensional tensor.
-    However, neural networks require all samples in a batch to have the same dimensions.
-    Since gestures have variable time lengths (T), we use `pad_sequence` to fill shorter
-    sequences with zeros (padding) up to the maximum sequence length in the current batch.
-    
-    We also track the actual lengths of the sequences before padding so that the LSTM
-    can extract the correct final state instead of reading the padded zeros.
-    """
-    sequences, labels = zip(*batch)
-    lengths = torch.tensor([len(seq) for seq in sequences], dtype=torch.long)
-    
-    # Pad sequences to (batch_size, max_T_in_batch, 400)
-    padded_seqs = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True, padding_value=0.0)
-    labels = torch.stack(labels)
-    
-    return padded_seqs, lengths, labels
-
-# ---------------------------------------------------------------------------
-# 2. LSTM Neural Network Architecture
-# ---------------------------------------------------------------------------
-
-class BVPLSTMClassifier(nn.Module):
-    """
-    Compact LSTM Classifier for 400-dimensional BVP time series.
-    """
-    def __init__(self, input_size: int = 400, hidden_size: int = 128,
-                 num_layers: int = 1, num_classes: int = 5):
-        super().__init__()
-        # Compact LSTM layer
-        self.lstm = nn.LSTM(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            num_layers=num_layers,
-            batch_first=True
-        )
-        
-        # Classifier Head
-        self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 64),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(64, num_classes)
-        )
-
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
-        # x shape: (batch_size, max_T_in_batch, 400)
-        # outputs shape: (batch_size, max_T_in_batch, hidden_size)
-        outputs, (hn, cn) = self.lstm(x)
-        
-        # Why the Final Hidden State is Used:
-        # -----------------------------------
-        # The outputs tensor contains the hidden states of the LSTM at *every* timestep.
-        # For sequence-level classification, we only care about the representation of
-        # the sequence *after* the entire gesture has been seen.
-        # We index into the outputs tensor at `lengths - 1` to extract the hidden state
-        # at the last actual frame before padding zeros began.
-        batch_size = x.size(0)
-        final_states = outputs[torch.arange(batch_size), lengths - 1]
-        
-        # Pass final hidden state through classification head
-        logits = self.fc(final_states)
-        return logits
-
-# ---------------------------------------------------------------------------
-# 3. Main Training & Evaluation Loop
-# ---------------------------------------------------------------------------
 
 def main():
     torch.manual_seed(SEED)
@@ -195,78 +105,28 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
 
-    # Initialize Model, Loss, Optimizer
+    # Initialize Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = BVPLSTMClassifier(num_classes=len(TOP5)).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     print(f"Using Device: {device}")
     print(f"Parameters  : {sum(p.numel() for p in model.parameters()):,}\n")
 
     # ── Training with Early Stopping ──────────────────────────────────────
-    best_val_loss = float("inf")
-    patience_counter = 0
-
-    tr_losses, val_losses, val_accs = [], [], []
-
-    print(f"  {'Epoch':>5}  {'Tr Loss':>8}  {'Val Loss':>8}  {'Val Acc':>7}")
-    print("  " + "-" * 38)
-
     t0 = time.time()
-    for epoch in range(1, EPOCHS + 1):
-        # Training phase
-        model.train()
-        train_loss = 0.0
-        train_total = 0
-        for xb, lengths, yb in train_loader:
-            xb, lengths, yb = xb.to(device), lengths.to(device), yb.to(device)
-            optimizer.zero_grad()
-            logits = model(xb, lengths)
-            loss = criterion(logits, yb)
-            loss.backward()
-            optimizer.step()
-            
-            train_loss += loss.item() * len(yb)
-            train_total += len(yb)
-            
-        epoch_train_loss = train_loss / train_total
-
-        # Validation phase
-        model.eval()
-        val_loss = 0.0
-        val_correct = 0
-        val_total = 0
-        with torch.no_grad():
-            for xb, lengths, yb in val_loader:
-                xb, lengths, yb = xb.to(device), lengths.to(device), yb.to(device)
-                logits = model(xb, lengths)
-                loss = criterion(logits, yb)
-                
-                val_loss += loss.item() * len(yb)
-                val_correct += (logits.argmax(dim=1) == yb).sum().item()
-                val_total += len(yb)
-
-        epoch_val_loss = val_loss / val_total
-        epoch_val_acc = val_correct / val_total
-
-        tr_losses.append(epoch_train_loss)
-        val_losses.append(epoch_val_loss)
-        val_accs.append(epoch_val_acc)
-
-        print(f"  {epoch:>5d}  {epoch_train_loss:>8.4f}  {epoch_val_loss:>8.4f}  {epoch_val_acc*100:>6.2f}%")
-
-        # Early Stopping Check
-        if epoch_val_loss < best_val_loss:
-            best_val_loss = epoch_val_loss
-            patience_counter = 0
-            torch.save(model.state_dict(), MODEL_PATH)  # Save best checkpoint
-        else:
-            patience_counter += 1
-            if patience_counter >= PATIENCE:
-                print(f"\nEarly stopping triggered after {epoch} epochs.")
-                break
-
+    tr_losses, val_losses, val_accs = train_lstm(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        device=device,
+        epochs=EPOCHS,
+        lr=LEARNING_RATE,
+        patience=PATIENCE,
+        checkpoint_path=MODEL_PATH,
+        verbose=True,
+    )
+    # Convert validation accuracies from percentages (returned by train_lstm) to fractions for plotting
+    val_accs = [acc / 100.0 for acc in val_accs]
     print(f"Training completed in {time.time() - t0:.1f}s\n")
 
     # Plot training curves

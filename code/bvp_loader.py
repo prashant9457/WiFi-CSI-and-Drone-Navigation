@@ -8,24 +8,13 @@ import os
 import numpy as np
 import scipy.io as sio
 
-# Configurations
-ALL9_GESTURE_IDS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-GESTURE_NAMES = {
-    1: "Push & Pull",
-    2: "Sweep",
-    3: "Clap",
-    4: "Slide",
-    5: "Circle (CW)",
-    6: "Circle (CCW)",
-    7: "Triangle",
-    8: "Zigzag",
-    9: "Draw N",
-    10: "Random",
-}
-
-LOCATION_NAMES = [f"Loc {i}" for i in range(1, 9)]      # 8 grid positions
-ORIENTATION_NAMES = ["South", "SE", "East", "NE", "North"] # 5 directions
+# Centralized Configurations imported from common package
+from common.constants import (
+    ALL9_GESTURE_IDS,
+    GESTURE_NAMES,
+    LOCATION_NAMES,
+    ORIENTATION_NAMES
+)
 
 def extract_features(bvp: np.ndarray) -> np.ndarray:
     """

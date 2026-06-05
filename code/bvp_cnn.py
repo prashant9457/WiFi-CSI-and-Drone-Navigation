@@ -16,18 +16,13 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from bvp_loader import load_dataset as load_bvp_dataset
 from bvp_plotting import _dark_ax, plot_confusion_matrix
 
-DATA_DIR = os.path.join("code", "data", "BVP")
-OUT_DIR  = "img"
-
-TOP5 = {
-    1: "Push & Pull",
-    2: "Sweep",
-    3: "Clap",
-    4: "Slide",
-    5: "Draw Circle (CW)",
-}
-CLASS_NAMES = [TOP5[gid] for gid in sorted(TOP5)]
-SEED = 42
+from common.constants import (
+    DATA_DIR,
+    OUT_DIR,
+    SEED,
+    TOP5,
+    TOP5_CLASS_NAMES as CLASS_NAMES,
+)
 
 def run_cnn(X: np.ndarray, y: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> None:
     """Train and evaluate the PyTorch CNN classifier."""

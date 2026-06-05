@@ -15,11 +15,8 @@ import os
 import time
 import warnings
 import numpy as np
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 
 # Custom modules
 from bvp_loader import load_dataset, GESTURE_NAMES, LOCATION_NAMES, ALL9_GESTURE_IDS
@@ -27,10 +24,9 @@ from bvp_plotting import plot_confusion_matrix, plot_invariance_summary
 
 warnings.filterwarnings("ignore")
 
-DATA_DIR  = os.path.join("code", "data", "BVP")
-OUT_DIR   = "img"
-SEED      = 42
-TEST_SIZE = 0.15
+# Common package imports
+from common.constants import DATA_DIR, OUT_DIR, SEED, TEST_SIZE
+from common.models import get_mlp_pipeline
 
 def run_classifier(
     X_train: np.ndarray,
@@ -43,16 +39,7 @@ def run_classifier(
     Train an MLP and return (test_accuracy, predictions).
     Uses a StandardScaler -> MLP pipeline.
     """
-    mlp = Pipeline([
-        ("scaler", StandardScaler()),
-        ("clf",    MLPClassifier(
-            hidden_layer_sizes=(256, 128),
-            max_iter=100,
-            early_stopping=True,
-            validation_fraction=0.1,
-            random_state=SEED,
-        )),
-    ])
+    mlp = get_mlp_pipeline(SEED)
     t0 = time.time()
     mlp.fit(X_train, y_train)
     elapsed = time.time() - t0
@@ -69,11 +56,10 @@ def run_lstm_gesture_9(
     Train LSTM on 9 gesture classes and return the test accuracy.
     """
     import torch
-    import torch.nn as nn
-    import torch.optim as optim
     from torch.utils.data import DataLoader
     from bvp_loader import load_sequence_dataset, ALL9_GESTURE_IDS
-    from classify_bvp_lstm import BVPSequenceDataset, collate_fn, BVPLSTMClassifier
+    from common.models import BVPSequenceDataset, collate_fn, BVPLSTMClassifier
+    from common.training import train_lstm
 
     print("\n  Loading BVP sequences for all 9 gestures...")
     sequences, labels = load_sequence_dataset(
@@ -110,44 +96,20 @@ def run_lstm_gesture_9(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = BVPLSTMClassifier(num_classes=9).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
-
-    best_val_loss = float("inf")
-    patience = 5
-    patience_counter = 0
     checkpoint_path = "lstm_temp_9.pth"
 
     print("  Training LSTM on 9 gesture classes (with early stopping)...")
-    for epoch in range(1, 30):
-        model.train()
-        for xb, lengths, yb in train_loader:
-            xb, lengths, yb = xb.to(device), lengths.to(device), yb.to(device)
-            optimizer.zero_grad()
-            logits = model(xb, lengths)
-            loss = criterion(logits, yb)
-            loss.backward()
-            optimizer.step()
-
-        # Validation
-        model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for xb, lengths, yb in val_loader:
-                xb, lengths, yb = xb.to(device), lengths.to(device), yb.to(device)
-                logits = model(xb, lengths)
-                loss = criterion(logits, yb)
-                val_loss += loss.item() * len(yb)
-        val_loss /= len(val_lbls)
-
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience_counter = 0
-            torch.save(model.state_dict(), checkpoint_path)
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                break
+    train_lstm(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        device=device,
+        epochs=30,
+        lr=1e-3,
+        patience=5,
+        checkpoint_path=checkpoint_path,
+        verbose=False,
+    )
 
     # Evaluate on test set
     model.load_state_dict(torch.load(checkpoint_path))

@@ -46,7 +46,6 @@ import numpy as np
 import scipy.io as sio
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
@@ -54,39 +53,24 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
     accuracy_score,
 )
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 
 # Custom modules
 from bvp_loader import load_dataset as load_bvp_dataset
 from bvp_plotting import plot_confusion_matrix
 from bvp_cnn import run_cnn as _try_torch_cnn
 
-warnings.filterwarnings("ignore")
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
-DATA_DIR = os.path.join("code", "data", "BVP")
-OUT_DIR  = "img"
-
-# Top-5 gestures (by sample count)
-TOP5 = {
-    1: "Push & Pull",
-    2: "Sweep",
-    3: "Clap",
-    4: "Slide",
-    5: "Draw Circle (CW)",
-}
-
-# Map gesture IDs → consecutive class indices 0..4
-LABEL_MAP   = {gid: idx for idx, gid in enumerate(sorted(TOP5))}
-CLASS_NAMES = [TOP5[gid] for gid in sorted(TOP5)]
-
-SEED        = 42
-TEST_SIZE   = 0.15
-VAL_SIZE    = 0.15   # of remaining after test split
+# Common package imports
+from common.constants import (
+    DATA_DIR,
+    OUT_DIR,
+    TOP5,
+    TOP5_LABEL_MAP as LABEL_MAP,
+    TOP5_CLASS_NAMES as CLASS_NAMES,
+    SEED,
+    TEST_SIZE,
+    VAL_SIZE,
+)
+from common.models import get_mlp_pipeline
 
 # ---------------------------------------------------------------------------
 # 1. Data loading & feature extraction
@@ -144,16 +128,7 @@ if __name__ == "__main__":
     print("  Multi-Layer Perceptron (MLP) Classifier")
     print("=" * 55)
 
-    mlp = Pipeline([
-        ("scaler", StandardScaler()),
-        ("clf",    MLPClassifier(
-            hidden_layer_sizes=(256, 128),
-            max_iter=100,
-            early_stopping=True,
-            validation_fraction=0.1,
-            random_state=SEED,
-        )),
-    ])
+    mlp = get_mlp_pipeline(SEED)
 
     t0 = time.time()
     print("  Training MLP... (using early stopping to prevent overfitting)")

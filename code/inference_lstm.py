@@ -15,16 +15,11 @@ import scipy.io as sio
 import torch
 
 from bvp_loader import load_single_bvp
-from classify_bvp_lstm import BVPLSTMClassifier
+from common.models import BVPLSTMClassifier
+from common.constants import TOP5_CLASS_NAMES
 
 # Mapping of class index (0..4) to Gesture Names for Top-5
-TOP5_NAMES = {
-    0: "Push & Pull",
-    1: "Sweep",
-    2: "Clap",
-    3: "Slide",
-    4: "Draw Circle (CW)"
-}
+TOP5_NAMES = {idx: name for idx, name in enumerate(TOP5_CLASS_NAMES)}
 
 def predict_single_file(file_path: str, model_path: str):
     if not os.path.exists(file_path):

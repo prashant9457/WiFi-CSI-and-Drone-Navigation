@@ -27,8 +27,7 @@ from bvp_loader import GESTURE_NAMES, find_sample, load_single_bvp as load_bvp
 # Constants
 # ---------------------------------------------------------------------------
 
-DATA_DIR = os.path.join("code", "data", "BVP")
-OUT_DIR  = "img"
+from common.constants import DATA_DIR, OUT_DIR
 
 # The 20×20 grid covers velocities from -2 m/s to +2 m/s on both axes
 VEL_EXTENT = [-2, 2, -2, 2]
