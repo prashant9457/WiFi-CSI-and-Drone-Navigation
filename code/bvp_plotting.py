@@ -52,14 +52,14 @@ def plot_confusion_matrix(
     plt.close(fig)
 
 def plot_invariance_summary(
-    results: list[dict],  # each: {label, acc, random_baseline, color}
+    results: list[dict],
     out_path: str,
 ) -> None:
     """
     Horizontal bar chart comparing achieved accuracy vs random-chance baseline
     for all classification tasks.
     """
-    fig, ax = plt.subplots(figsize=(11, 5), facecolor="#12121f")
+    fig, ax = plt.subplots(figsize=(11, 5.5), facecolor="#12121f")
     _dark_ax(ax)
 
     labels   = [r["label"]            for r in results]
@@ -72,7 +72,7 @@ def plot_invariance_summary(
 
     # Achieved accuracy bars
     bars = ax.barh(y_pos + bar_h / 2, achieved, height=bar_h,
-                   color=colors, alpha=0.85, label="RF accuracy (%)")
+                   color=colors, alpha=0.85, label="Model accuracy (%)")
     # Random-chance baseline bars
     ax.barh(y_pos - bar_h / 2, baseline, height=bar_h,
             color="#334155", alpha=0.85, label="Random baseline (%)")
@@ -87,8 +87,8 @@ def plot_invariance_summary(
     ax.set_xlabel("Accuracy (%)", color="#94a3b8", fontsize=11)
     ax.set_xlim(0, 115)
     ax.set_title(
-        "BVP Domain-Invariance Test\n"
-        "Projection features encode location strongly -- temporal models needed",
+        "BVP Domain-Invariance & Temporal Model Evaluation\n"
+        "Preserving temporal trajectories resolves spatial shortcut learning",
         color="#c4b5fd", fontsize=12, pad=14,
     )
 
@@ -96,17 +96,16 @@ def plot_invariance_summary(
                        loc="lower right")
     legend.get_frame().set_edgecolor("#334155")
 
-    # Annotate what each result means
-    annotations = [
-        ("~31% (proj. loses",   "temporal ordering)",       "#fb923c"),
-        ("~95% -- location NOT", "removed by projections",   "#f472b6"),
-    ]
-    for i, (line1, line2, col) in enumerate(annotations):
-        ax.text(105, y_pos[i] + bar_h / 2,
-                f"{line1}\n{line2}", va="center", ha="right",
-                color=col, fontsize=7.5, style="italic",
-                bbox=dict(facecolor="#1e1e2e", edgecolor="#334155",
-                          boxstyle="round,pad=0.3", alpha=0.8))
+    # Annotate what each result means dynamically from the result dictionaries
+    for i, r in enumerate(results):
+        if "ann" in r:
+            line1, line2 = r["ann"]
+            col = r["color"]
+            ax.text(105, y_pos[i] + bar_h / 2,
+                    f"{line1}\n{line2}", va="center", ha="right",
+                    color=col, fontsize=7.5, style="italic",
+                    bbox=dict(facecolor="#1e1e2e", edgecolor="#334155",
+                              boxstyle="round,pad=0.3", alpha=0.8))
 
     plt.tight_layout()
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -114,64 +113,6 @@ def plot_invariance_summary(
     print(f"  Saved -> {out_path}")
     plt.close(fig)
 
-def plot_feature_importance(
-    importances: np.ndarray, top_k: int, out_path: str
-) -> None:
-    """
-    Bar chart of the top-k most important feature dimensions.
 
-    The 1200 features are laid out as:
-      [  0: 400)  max-projection  cells  (row-major 20×20)
-      [400: 800)  mean-projection cells
-      [800:1200)  std-projection  cells
-    """
-    top_idx = np.argsort(importances)[::-1][:top_k]
-    top_imp = importances[top_idx]
 
-    def _channel_label(i: int) -> str:
-        if i < 400:
-            r, c = divmod(i, 20)
-            return f"max [{r},{c}]"
-        elif i < 800:
-            r, c = divmod(i - 400, 20)
-            return f"mean[{r},{c}]"
-        else:
-            r, c = divmod(i - 800, 20)
-            return f"std [{r},{c}]"
-
-    labels = [_channel_label(i) for i in top_idx]
-    colors = [
-        "#818cf8" if i < 400 else "#f472b6" if i < 800 else "#34d399"
-        for i in top_idx
-    ]
-
-    fig, ax = plt.subplots(figsize=(14, 5), facecolor="#12121f")
-    _dark_ax(ax)
-    ax.barh(range(top_k)[::-1], top_imp, color=colors, alpha=0.85)
-    ax.set_yticks(range(top_k)[::-1])
-    ax.set_yticklabels(labels, fontsize=8, color="#94a3b8")
-    ax.set_xlabel("Importance", color="#94a3b8", fontsize=10)
-    ax.set_title(
-        f"MLP Connection Weights — Top {top_k} Feature Importances\n"
-        "■ max-projection  ■ mean-projection  ■ std-projection",
-        color="#c4b5fd", fontsize=11, pad=10,
-    )
-
-    # Legend patches
-    from matplotlib.patches import Patch
-    legend = ax.legend(
-        handles=[
-            Patch(color="#818cf8", label="max-projection"),
-            Patch(color="#f472b6", label="mean-projection"),
-            Patch(color="#34d399", label="std-projection"),
-        ],
-        facecolor="#1e1e2e", labelcolor="white", fontsize=9,
-    )
-    legend.get_frame().set_edgecolor("#334155")
-
-    plt.tight_layout()
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    plt.savefig(out_path, dpi=150, bbox_inches="tight", facecolor="#12121f")
-    print(f"  Saved -> {out_path}")
-    plt.close(fig)
 

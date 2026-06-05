@@ -35,7 +35,6 @@ Classifier
 Outputs (saved to img/)
 -----------------------
   confusion_matrix.png   — heatmap of test-set predictions vs ground truth
-  feature_importance.png — top-40 Random Forest feature importance bars
 """
 
 from __future__ import annotations
@@ -60,7 +59,7 @@ from sklearn.pipeline import Pipeline
 
 # Custom modules
 from bvp_loader import load_dataset as load_bvp_dataset
-from bvp_plotting import plot_confusion_matrix, plot_feature_importance
+from bvp_plotting import plot_confusion_matrix
 from bvp_cnn import run_cnn as _try_torch_cnn
 
 warnings.filterwarnings("ignore")
@@ -178,12 +177,7 @@ if __name__ == "__main__":
         os.path.join(OUT_DIR, "confusion_matrix.png")
     )
 
-    # Compute connection weights heuristic for feature importance:
-    # average weight magnitude of the first layer connections
-    coefs = mlp.named_steps["clf"].coefs_[0]
-    importances = np.mean(np.abs(coefs), axis=1)
-    plot_feature_importance(importances, top_k=40,
-                            out_path=os.path.join(OUT_DIR, "feature_importance.png"))
+
 
     # ── Optional CNN ──────────────────────────────────────────────────────
     _try_torch_cnn(X_train, y_train, X_test, y_test)

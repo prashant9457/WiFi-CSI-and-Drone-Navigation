@@ -375,8 +375,6 @@ python code/classify_bvp.py
 
 ![Confusion Matrix](img/confusion_matrix.png)
 
-![Feature Importance](img/feature_importance.png)
-
 ---
 
 #### Why 46% and What it Tells Us
@@ -451,12 +449,13 @@ The massive **+30.8% accuracy boost** from the LSTM model directly confirms our 
 
 This experiment answers one fundamental question: **does BVP actually remove location information?**
 
-Two Multi Layer Perceptron (MLP) classifiers are trained on *identical* 1 200 dimensional feature vectors (the same max/mean/std projections from Part 3) but with different prediction targets. All **9 gesture classes** are included (gesture 10, "Random", is excluded: it is the smallest class with only 500 samples):
+To test this, we evaluate three parallel classifiers on the same dataset. We train MLP models on the static 1 200 dimensional feature vectors (Part 3 projections) and a temporal LSTM model on the raw sequence vectors. All **9 gesture classes** are included (gesture 10, "Random", is excluded):
 
-| Classifier | Target | Classes | Random baseline |
-|---|---|---|---|
-| A | Gesture | 9 | 11.1% |
-| B | Location | 8 | 12.5% |
+| Classifier | Model | Target | Classes | Random baseline |
+|---|---|---|---|---|
+| A | MLP | Gesture | 9 | 11.1% |
+| B | LSTM | Gesture | 9 | 11.1% |
+| C | MLP | Location | 8 | 12.5% |
 
 Run the experiment:
 
@@ -473,10 +472,11 @@ python code/classify_location.py
 
 #### Results
 
-| Task | Samples | Classes | Random | MLP Accuracy | Gap | Verdict |
-|---|---|---|---|---|---|---|
-| Gesture | 43 153 | 9 | 11.1% | **37.6%** | +26.5% | Weak signal |
-| Location | 43 153 | 8 | 12.5% | **96.0%** | +83.5% | STRONG: not removed |
+| Task | Model | Samples | Classes | Random | Accuracy | Gap | Verdict |
+|---|---|---|---|---|---|---|---|
+| Gesture | MLP | 43 153 | 9 | 11.1% | **37.6%** | +26.5% | Weak signal (collapsed time loses shape) |
+| Gesture | LSTM | 43 153 | 9 | 11.1% | **71.0%** | +59.9% | STRONG: temporal ordering preserves shape |
+| Location | MLP | 43 153 | 8 | 12.5% | **96.0%** | +83.5% | STRONG: location cues NOT removed |
 
 ![Domain Invariance Bars](img/domain_invariance_bars.png)
 
