@@ -411,6 +411,14 @@ Run the LSTM classifier:
 python code/classify_bvp_lstm.py
 ```
 
+#### Running Inference
+
+To run inference on a single BVP `.mat` file using the trained LSTM model:
+
+```bash
+python code/inference_lstm.py --file "code/data/BVP/20181109-VS/6-link/user1/user1-1-1-1-1-1-1e-07-100-20-100000-L0.mat"
+```
+
 #### Results: LSTM vs MLP Baseline
 
 The training ran for 27 epochs on CPU (early stopping triggered based on validation loss):
